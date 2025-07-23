@@ -61,9 +61,33 @@ app.get('/cat', async (_, res) => {
 
 // POST /feedback
 app.post('/feedback', (req, res) => {
-  const { userId, rating, comment } = req.body;
-  console.log('Feedback:', { userId, rating, comment });
-  // TODO: можно сохранить в БД или в файл
+  const { rating, comment, initData } = req.body;
+
+  if (!initData || !checkSignature(initData)) {
+    return res.status(400).json({ error: 'Invalid initData' });
+  }
+
+  const userParam = initData
+    .split('&')
+    .find(p => p.startsWith('user='))
+    ?.split('=')[1];
+
+  if (!userParam) {
+    return res.status(400).json({ error: 'User not found in initData' });
+  }
+
+  const user = JSON.parse(decodeURIComponent(userParam));
+  const userId = user.id;
+  const fullName = `${user.first_name} ${user.last_name || ''}`.trim();
+
+  console.log('📩 Отзыв получен:', {
+    userId,
+    fullName,
+    rating,
+    comment,
+    time: new Date().toISOString()
+  });
+
   res.json({ status: 'ok' });
 });
 
