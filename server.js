@@ -1,4 +1,3 @@
-// server.js
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
@@ -7,7 +6,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [ 'https://shimmering-horse-0fa49c.netlify.app' ] 
+}));
 app.use(express.json());
 
 // Секрет для валидации initData (WEBAPP_SECRET)
