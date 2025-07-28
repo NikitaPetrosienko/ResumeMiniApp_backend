@@ -11,10 +11,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Секрет для валидации initData (WEBAPP_SECRET)
 const SECRET = process.env.WEBAPP_SECRET;
 
-// Проверка подписи Telegram WebApp initData
+
 function checkSignature(initData) {
   const params = initData.split('&').map(p => p.split('='));
   const hashParam = params.find(p => p[0] === 'hash')[1];
@@ -35,13 +34,13 @@ function checkSignature(initData) {
   return hmac === hashParam;
 }
 
-// GET /user?initData=...
+
 app.get('/user', (req, res) => {
   const { initData } = req.query;
   if (!initData || !checkSignature(initData)) {
     return res.status(400).json({ error: 'Invalid initData' });
   }
-  // Распарсим user из initData
+  
   const userParam = initData
     .split('&')
     .find(p => p.startsWith('user='))
@@ -50,7 +49,7 @@ app.get('/user', (req, res) => {
   res.json({ firstName: user.first_name, userId: user.id });
 });
 
-// GET /cat
+
 app.get('/cat', async (_, res) => {
   try {
     const { data } = await axios.get('https://api.thecatapi.com/v1/images/search');
@@ -60,7 +59,7 @@ app.get('/cat', async (_, res) => {
   }
 });
 
-// POST /feedback
+
 app.post('/feedback', (req, res) => {
   const { rating, comment, initData } = req.body;
 
