@@ -7,12 +7,11 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-  origin: [ 'https://shimmering-horse-0fa49c.netlify.app' ] 
+  origin: ['https://shimmering-horse-0fa49c.netlify.app']
 }));
 app.use(express.json());
 
-const SECRET = process.env.WEBAPP_SECRET;
-
+const SECRET = process.env.WEBAPP_SECRET; 
 
 function checkSignature(initData) {
   const params = initData.split('&').map(p => p.split('='));
@@ -23,24 +22,26 @@ function checkSignature(initData) {
     .map(p => `${p[0]}=${p[1]}`)
     .join('\n');
 
+
   const secretKey = crypto
-    .createHmac('sha256', SECRET)
-    .update('WebAppData')
+    .createHash('sha256')
+    .update(SECRET)
     .digest();
+
+
   const hmac = crypto
     .createHmac('sha256', secretKey)
     .update(dataCheckString)
     .digest('hex');
+
   return hmac === hashParam;
 }
-
 
 app.get('/user', (req, res) => {
   const { initData } = req.query;
   if (!initData || !checkSignature(initData)) {
     return res.status(400).json({ error: 'Invalid initData' });
   }
-  
   const userParam = initData
     .split('&')
     .find(p => p.startsWith('user='))
@@ -49,45 +50,35 @@ app.get('/user', (req, res) => {
   res.json({ firstName: user.first_name, userId: user.id });
 });
 
-
 app.get('/cat', async (_, res) => {
   try {
     const { data } = await axios.get('https://api.thecatapi.com/v1/images/search');
     res.json({ url: data[0].url });
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch cat' });
   }
 });
 
-
 app.post('/feedback', (req, res) => {
   const { rating, comment, initData } = req.body;
-
   if (!initData || !checkSignature(initData)) {
     return res.status(400).json({ error: 'Invalid initData' });
   }
-
   const userParam = initData
     .split('&')
     .find(p => p.startsWith('user='))
     ?.split('=')[1];
-
   if (!userParam) {
     return res.status(400).json({ error: 'User not found in initData' });
   }
-
   const user = JSON.parse(decodeURIComponent(userParam));
-  const userId = user.id;
-  const fullName = `${user.first_name} ${user.last_name || ''}`.trim();
-
   console.log('📩 Отзыв получен:', {
-    userId,
-    fullName,
+    userId: user.id,
+    fullName: `${user.first_name} ${user.last_name || ''}`.trim(),
     rating,
     comment,
     time: new Date().toISOString()
   });
-
   res.json({ status: 'ok' });
 });
 
